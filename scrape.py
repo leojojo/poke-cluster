@@ -1,4 +1,4 @@
-import requests, re
+import requests, re, math
 from scipy.sparse import lil_matrix
 from bs4 import BeautifulSoup as bs
 
@@ -36,17 +36,23 @@ def get_poke_list():
     srtd = sorted(poke_list.items(), key=lambda x:x[0])
     return [ s[1] for s in srtd ]
 
-def get_move_list():
+def get_move_idf():
     moves = []
+    idfs = []
     for i in range(MOVE_MAX):
         soup = req_soup(MOVE_PATH, i+1)
-        res = soup.find(id='result').get_text()
-        grep = re.search(r'『(.+)』', res).group(1)
-        moves.append(grep)
-    return moves
+        name = re.search(r'『(.+)』', soup.find(id='result').get_text()).group(1)
+        if soup.find(class_='im border'):
+            idf = 0
+        else:
+            num = soup.find(class_='narrow2').strong.get_text()[:1]
+            idf = math.log10( (1 + MOVE_MAX) / int(num) )
+        moves.append(name)
+        idfs.append(idf)
+    return moves, idfs
 
 def main():
-    print(get_move_list())
+    print(get_move_idf())
 
 if __name__ == '__main__':
     main()
